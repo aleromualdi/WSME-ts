@@ -49,11 +49,9 @@ where the scaled $\frac{Z(Q)}{Z_{\text{total}}}$ represents the probability of f
 
 ## Computational Implementation
 
-In `src/` I implemented the **WSME model** using a **single sequence approximation (SSA)**, and **double sequence approximation (DSA)** (details can be found on the review paper [1]), which allows for efficient computation of the partition function while considering native contacts.
+- In `src/` I implemented the **WSME model** using a **single sequence approximation (SSA)**, and **double sequence approximation (DSA)** (details can be found on the review paper [1]), which allows for efficient computation of the partition function.
 
-In `single-point-mutants.ipynb` I implement the workflow to demosntrate how to use the WSME-ts model to predict thermostability of single-point mutants.
-
-I used the [**Novozymes Kaggle dataset**](https://www.kaggle.com/code/tranminhthuan/novozymes-eda-modelling-protbert-xgboost) for getting the single-point mutant sequences, and their corresponding **$t_m$ values**, and generated mutant structures using [**ESMFold**](https://esmatlas.com/resources?action=fold). The Novozymes dataset includes the sequences and experimentally measured $t_m$ values of single mutants, allowing for model validation.
+- In `single-point-mutants.ipynb` I implement the workflow to demosntrate how to use the WSME-ts model to predict thermostability of single-point mutants. Here, I used the [**Novozymes Kaggle dataset**](https://www.kaggle.com/code/tranminhthuan/novozymes-eda-modelling-protbert-xgboost) for getting the single-point mutant sequences, and their corresponding **$t_m$ values**, and generated mutant structures using [**ESMFold**](https://esmatlas.com/resources?action=fold). The Novozymes dataset includes the sequences and experimentally measured $t_m$ values of single mutants, allowing for model validation.
 
 
 ## References
