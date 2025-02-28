@@ -1,6 +1,6 @@
-# WSME-ts
+# Wako-Saitô-Muñoz-Eaton (WSME) model for protein mutant thermostability prediction
 
-This code implements **WSME-ts**, a simple physics-based approach to predict the thermostability (as measured by melting point $t_m$) of single-point mutants by comparing their free-energy landscapes with that of the WT protein.
+This code implements **Wako-Saitô-Muñoz-Eaton-Thermostability** (WSME-ts), a simple physics-based approach to predict the thermostability (as measured by melting point $t_m$) of single-point mutants by comparing their free-energy landscapes with that of the WT protein.
 
 ## Background and Motivation
 
