@@ -19,6 +19,7 @@ def compute_hamiltonian(
 
     Returns:
         H (float): Hamiltonian value.
+    
     """
     N = contact_map.shape[0]
     H = 0.0
@@ -114,6 +115,7 @@ def compute_partition_function_Q_DSA(
 
     Returns:
         Z_Q (np.ndarray): Restricted partition function per Q.
+    
     """
     N = contact_map.shape[0]
     beta = 1 / (kB * temperature)
