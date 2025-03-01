@@ -1,5 +1,7 @@
+from typing import List, Tuple
+
 import numpy as np
-from numba import njit
+from numba import njit, prange
 
 kB = 1.987e-3  # kcal/mol·K
 
@@ -7,7 +9,7 @@ kB = 1.987e-3  # kcal/mol·K
 @njit
 def compute_hamiltonian(
     contact_map: np.ndarray, m_state: np.ndarray, contact_energy: float
-):
+) -> float:
     """Computes the Hamiltonian (H) for the WSME model with m_{i,j} condition.
 
     Parameters:
@@ -33,7 +35,7 @@ def compute_hamiltonian(
     return H
 
 
-def compute_W(m_state: np.ndarray, entropy_penalty: float):
+def compute_W(m_state: np.ndarray, entropy_penalty: float) -> float:
     """Computes statistical weight W(m) using SSA.
 
     Parameters:
@@ -49,30 +51,29 @@ def compute_W(m_state: np.ndarray, entropy_penalty: float):
     return np.exp(exponent)
 
 
-# @njit
+@njit
 def compute_partition_function_Q_SSA(
     contact_map: np.ndarray,
     entropy_penalty: float,
     contact_energy: float,
-    temperature=310,
-):
+    temperature: float = 310,
+) -> np.ndarray:
     """Computes restricted partition function Z(Q) using SSA.
 
     Parameters:
         contact_map (np.ndarray): NxN matrix for native contacts.
-        temperature (float): Temperature in Kelvin.
         entropy_penalty (float): Entropy penalty per residue.
         contact_energy (float): Energy per contact.
+        temperature (float): Temperature in Kelvin.
 
     Returns:
-        Q_values (list): Fractions of native contacts.
-        Z_Q (dict): Restricted partition function per Q.
+        Z_Q (np.ndarray): Restricted partition function per Q.
     """
 
     N = contact_map.shape[0]
     beta = 1 / (kB * temperature)
 
-    Z_Q = {q: 0 for q in range(N + 1)}
+    Z_Q = np.zeros(N + 1)  # Initialize partition function storage
 
     # Iterate over all single contiguous folding segments
     for i in range(N):
@@ -82,45 +83,47 @@ def compute_partition_function_Q_SSA(
 
             W_m = compute_W(m_state, entropy_penalty)
             H_m = compute_hamiltonian(contact_map, m_state, contact_energy)
-            # print(f'i={i},j={j}, W_m={W_m}, H_m={H_m}, m_state={m_state}')
-            # print(f'W_m={W_m}')
 
             Q = int(np.sum(m_state))  # Fraction of folded residues
 
             Z_Q[Q] += W_m * np.exp(-beta * H_m)
 
-    Z_total = sum(Z_Q.values())  # Compute total partition function
-    for q in Z_Q:
-        Z_Q[q] /= Z_total  # Normalize using total sum
+    # Normalize using vectorized NumPy operation
+    Z_total = np.sum(Z_Q)
+    if Z_total > 0:
+        Z_Q /= Z_total
 
     return Z_Q
 
 
-@njit
+@njit(parallel=True)
 def compute_partition_function_Q_DSA(
     contact_map: np.ndarray,
     entropy_penalty: float,
     contact_energy: float,
     temperature=310,
-):
-    """Computes restricted partition function Z(Q) using Double Sequence Approximation (DSA).
-
+) -> np.ndarray:
+    """Computes restricted partition function Z(Q) using Double Sequence Approximation (DSA)
+    with parallelization.
+    
     Parameters:
         contact_map (np.ndarray): NxN matrix for native contacts.
-        temperature (float): Temperature in Kelvin.
         entropy_penalty (float): Entropy penalty per residue.
         contact_energy (float): Energy per contact.
+        temperature (float): Temperature in Kelvin.
 
     Returns:
-        Q_values (list): Fractions of native contacts.
-        Z_Q (dict): Restricted partition function per Q.
+        Z_Q (np.ndarray): Restricted partition function per Q.
     """
     N = contact_map.shape[0]
     beta = 1 / (kB * temperature)
     Z_Q = np.zeros(N + 1)
 
-    for i in range(N):
-        for j in range(i, N):
+    for i in prange(N):
+        if i % 10 == 0:
+            print(f"Processing i={i}")
+
+        for j in prange(i, N):
             m_state = np.zeros(N)
             m_state[i : j + 1] = 1
 
@@ -129,49 +132,35 @@ def compute_partition_function_Q_DSA(
             Q = int(np.sum(m_state))
             Z_Q[Q] += W_m * np.exp(-beta * H_m)
 
-            for k in range(j + 2, N):
-                for l in range(k, N):
+            for k in prange(j + 2, N):
+                for m in prange(k, N):
                     m_state_2 = m_state.copy()
-                    m_state_2[k : l + 1] = 1
+                    m_state_2[k : m + 1] = 1
 
                     W_m2 = np.exp(np.sum(entropy_penalty * m_state_2) / kB)
                     H_m2 = compute_hamiltonian(contact_map, m_state_2, contact_energy)
                     Q_2 = int(np.sum(m_state_2))
                     Z_Q[Q_2] += W_m2 * np.exp(-beta * H_m2)
 
+    # Normalize the partition function
     Z_total = np.sum(Z_Q)
     Z_Q /= Z_total
     return Z_Q
 
 
-def compute_free_energy_SSA(Z_Q: dict, temperature: int = 310):
-    """Computes free-energy landscape F(Q) using SSA.
+def compute_free_energy(
+    Z_Q: np.ndarray, temperature: float = 310
+) -> Tuple[List[float], List[float]]:
+    """Computes the free-energy landscape F(Q).
 
     Parameters:
-        Z_Q (dict): Restricted partition function Z(Q).
-        temperature (float): Kelvin temperature.
+        Z_Q (np.ndarray): Restricted partition function Z(Q) stored as a NumPy array.
+        temperature (float): Temperature in Kelvin (default = 310K).
 
     Returns:
         Q_values (list): Native contact fractions.
         F_values (list): Free energy per Q.
     """
-
-    Z_total = sum(Z_Q.values())
-
-    F_values = []
-    Q_values = []
-
-    for q in sorted(Z_Q.keys()):
-        if Z_Q[q] > 0:
-            F_q = -kB * temperature * np.log(Z_Q[q] / Z_total)
-
-            F_values.append(F_q)
-            Q_values.append(q / max(Z_Q.keys()))
-
-    return Q_values, F_values
-
-
-def compute_free_energy_DSA(Z_Q, temperature=310):
     Z_total = np.sum(Z_Q)
     F_values = []
     Q_values = []
@@ -183,7 +172,7 @@ def compute_free_energy_DSA(Z_Q, temperature=310):
             Q_values.append(q / (len(Z_Q) - 1))
 
     # Shift the free energy scale so the unfolded state (Q=0) is set to 0
-    max_FQ = max(F_values)  # Find the maximum free energy
-    F_values = [F - max_FQ for F in F_values]  # Shift all values down
+    max_FQ = max(F_values)
+    F_values = [F - max_FQ for F in F_values]
 
     return Q_values, F_values
