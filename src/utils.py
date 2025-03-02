@@ -39,22 +39,44 @@ def compute_contact_map(coords: np.ndarray, cutoff: float):
 
 
 def plot_free_energy(free_energy_data, selected_keys=None):
-    """Plots the free energy landscapes for selected protein variants.
-    If no keys are provided, plots all available variants.
+    """Plots the free energy landscapes for selected protein variants with custom colors.
 
     Parameters:
         free_energy_data (dict): Dictionary containing Q_values and F_values for each protein variant.
         selected_keys (list, optional): List of keys to plot. If None, all are plotted.
     """
-    plt.figure(figsize=(7, 5))
+    plt.figure(figsize=(15, 10))
 
     # If no specific keys are provided, plot all
     keys_to_plot = selected_keys if selected_keys else free_energy_data.keys()
 
+    # Color definitions
+    color_map = {
+        "wt.pdb": "black",
+    }
+
+    # Generate shades for groups
+    high_variants = [k for k in keys_to_plot if k.startswith("high")]
+    low_variants = [k for k in keys_to_plot if k.startswith("low")]
+    similar_variants = [k for k in keys_to_plot if k.startswith("similar")]
+
+    high_colors = plt.cm.Blues(np.linspace(0.4, 1, len(high_variants)))
+    low_colors = plt.cm.Reds(np.linspace(0.4, 1, len(low_variants)))
+    similar_colors = plt.cm.Greens(np.linspace(0.4, 1, len(similar_variants)))
+
+    # Assign colors dynamically
+    color_map.update(dict(zip(high_variants, high_colors)))
+    color_map.update(dict(zip(low_variants, low_colors)))
+    color_map.update(dict(zip(similar_variants, similar_colors)))
+
+    # Plot the free energy landscapes
     for fname in keys_to_plot:
         if fname in free_energy_data:
             data = free_energy_data[fname]
-            plt.plot(data["Q_values"], data["F_values"], label=fname)
+            color = color_map.get(fname, "gray")  # Default to gray if not categorized
+            plt.plot(
+                data["Q_values"], data["F_values"], label=fname, color=color, alpha=0.7
+            )
         else:
             print(f"Warning: {fname} not found in free_energy_data")
 

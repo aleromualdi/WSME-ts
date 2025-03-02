@@ -19,7 +19,7 @@ def compute_hamiltonian(
 
     Returns:
         H (float): Hamiltonian value.
-    
+
     """
     N = contact_map.shape[0]
     H = 0.0
@@ -36,6 +36,7 @@ def compute_hamiltonian(
     return H
 
 
+@njit
 def compute_W(m_state: np.ndarray, entropy_penalty: float) -> float:
     """Computes statistical weight W(m) using SSA.
 
@@ -106,7 +107,7 @@ def compute_partition_function_Q_DSA(
 ) -> np.ndarray:
     """Computes restricted partition function Z(Q) using Double Sequence Approximation (DSA)
     with parallelization.
-    
+
     Parameters:
         contact_map (np.ndarray): NxN matrix for native contacts.
         entropy_penalty (float): Entropy penalty per residue.
@@ -115,15 +116,15 @@ def compute_partition_function_Q_DSA(
 
     Returns:
         Z_Q (np.ndarray): Restricted partition function per Q.
-    
+
     """
     N = contact_map.shape[0]
     beta = 1 / (kB * temperature)
     Z_Q = np.zeros(N + 1)
 
     for i in prange(N):
-        if i % 10 == 0:
-            print(f"Processing i={i}")
+        # if i % 10 == 0:
+        #     print(f"Processing i={i}")
 
         for j in prange(i, N):
             m_state = np.zeros(N)
@@ -147,6 +148,57 @@ def compute_partition_function_Q_DSA(
     # Normalize the partition function
     Z_total = np.sum(Z_Q)
     Z_Q /= Z_total
+    return Z_Q
+
+
+@njit(parallel=True)
+def compute_partition_function_Q_TSA(
+    contact_map: np.ndarray,
+    entropy_penalty: float,
+    contact_energy: float,
+    temperature: float = 310,
+) -> np.ndarray:
+    """Computes restricted partition function Z(Q) using Triple Sequence Approximation (TSA)."""
+    N = contact_map.shape[0]
+    beta = 1 / (kB * temperature)
+    Z_Q = np.zeros(N + 1)
+
+    for i in prange(N):
+        for j in prange(i, N):
+            m_state = np.zeros(N)
+            m_state[i : j + 1] = 1  # First folding segment
+
+            W_m = compute_W(m_state, entropy_penalty)
+            H_m = compute_hamiltonian(contact_map, m_state, contact_energy)
+            Q = int(np.sum(m_state))
+            Z_Q[Q] += W_m * np.exp(-beta * H_m)
+
+            for k in prange(j + 2, N):
+                for m in prange(k, N):
+                    m_state_2 = m_state.copy()
+                    m_state_2[k : m + 1] = 1  # Second folding segment
+
+                    W_m2 = compute_W(m_state_2, entropy_penalty)
+                    H_m2 = compute_hamiltonian(contact_map, m_state_2, contact_energy)
+                    Q_2 = int(np.sum(m_state_2))
+                    Z_Q[Q_2] += W_m2 * np.exp(-beta * H_m2)
+
+                    for p in prange(m + 2, N):
+                        for q in prange(p, N):
+                            m_state_3 = m_state_2.copy()
+                            m_state_3[p : q + 1] = 1  # Third folding segment
+
+                            W_m3 = compute_W(m_state_3, entropy_penalty)
+                            H_m3 = compute_hamiltonian(
+                                contact_map, m_state_3, contact_energy
+                            )
+                            Q_3 = int(np.sum(m_state_3))
+                            Z_Q[Q_3] += W_m3 * np.exp(-beta * H_m3)
+
+    Z_total = np.sum(Z_Q)
+    if Z_total > 0:
+        Z_Q /= Z_total
+
     return Z_Q
 
 
