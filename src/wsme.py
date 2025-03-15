@@ -12,6 +12,9 @@ def compute_hamiltonian(
 ) -> float:
     """Computes the Hamiltonian (H) for the WSME model with m_{i,j} condition.
 
+    The calculation implements the WSME model's assumption that a contact between residues
+    i and j contributes to the energy only if all residues between i and j are folded.
+
     Parameters:
         contact_map (np.ndarray): NxN matrix representing native contacts (1 = contact, 0 = no contact).
         m_state (np.ndarray): Binary array (1 = folded, 0 = unfolded) for each residue.
