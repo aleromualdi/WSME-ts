@@ -1,7 +1,7 @@
 output
-data/
+data/novozymes-enzyme-stability-prediction
+data/predicted
+data/wt.pdb
 venv
 
-**.o
-**.so
 **.pyc
