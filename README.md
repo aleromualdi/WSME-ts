@@ -2,6 +2,18 @@
 
 This code implements **Wako-Saitô-Muñoz-Eaton-Thermostability** (WSME-ts), a simple physics-based approach to predict the thermostability (as measured by melting point $t_m$) of single-point mutants by comparing their free-energy landscapes with that of the WT protein.
 
+<div style="display: flex; align-items: center;">
+    <img src="img/wt.png" alt="Alt Text" width="280">
+    <img src="img/free_energy.png" alt="Another Image" width="500">
+</div>
+
+
+
+<div style="display: flex; align-items: center;">
+    <img src="img/spearman.png" alt="Another Image" width="800">
+</div>
+
+
 ## Background and Motivation
 
 Understanding protein stability and folding is a fundamental challenge in computational biology. While deep learning models have achieved remarkable success in structure prediction, physics-based models remain essential for investigating thermodynamic properties and stability. One such approach is the Wako-Saitô-Muñoz-Eaton (WSME) model [1], a statistical mechanical framework that computes free-energy landscapes from a protein’s native structure. The WSME model provides valuable insights into folding pathways, intermediates, and stability determinants with relatively low computational cost.
