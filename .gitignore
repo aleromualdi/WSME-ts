@@ -1,6 +1,7 @@
 output
 data/novozymes-enzyme-stability-prediction
 data/predicted
+data/predicted_copy
 data/wt.pdb
 venv
 
