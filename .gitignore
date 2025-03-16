@@ -1,2 +1,7 @@
 output
 data/
+venv
+
+**.o
+**.so
+**.pyc

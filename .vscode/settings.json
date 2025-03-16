@@ -1,5 +1,5 @@
 {
-    // "python.defaultInterpreterPath": "/Users/alessandro.romualdi/projects/drowning_det/.venv/bin/python",
+    "python.defaultInterpreterPath": "/Users/alessandro.romualdi/projects/coding/WSME-ts/.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "[python]": {
       "editor.formatOnSave": true,

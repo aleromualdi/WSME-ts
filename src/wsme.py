@@ -133,8 +133,9 @@ def compute_partition_function_Q_DSA(
             m_state = np.zeros(N)
             m_state[i : j + 1] = 1
 
-            W_m = np.exp(np.sum(entropy_penalty * m_state) / kB)
+            W_m = compute_W(m_state, entropy_penalty)
             H_m = compute_hamiltonian(contact_map, m_state, contact_energy)
+
             Q = int(np.sum(m_state))
             Z_Q[Q] += W_m * np.exp(-beta * H_m)
 

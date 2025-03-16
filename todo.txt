@@ -1,0 +1,1 @@
+- instead of using fixed values for energy/entropy, use tabulated value from force field
