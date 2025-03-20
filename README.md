@@ -45,7 +45,7 @@ The **partition function** is computed as:
 
 $\hspace{4cm}  Z = \sum_{\{m\}} W(\{m\}) e^{-\beta H(\{m\})}$
 
-where $\beta = \frac{1}{k_B T}$ (Boltzmann factor), and $W(\{m\})$ represents the entropy of the system. The partition function  sums over all conformational states of the system. However, in the WSME model, we group conformations are based on their fraction of native contacts $Q$:
+where $\beta = \frac{1}{k_B T}$ (Boltzmann factor), and $W(\{m\})$ represents the entropy of the system. The partition function  sums over all conformational states of the system. However, in the WSME model, group conformations are based on their fraction of native contacts $Q$:
 
 $\hspace{4cm}  Z(Q) = \sum_{\{m \mid Q(m) = Q\}} W(m) e^{-\beta H(m)}$,
 
